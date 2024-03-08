@@ -1,3 +1,82 @@
+
+
+
+
+
+## v8.2.0 (2023-10-10)
+
+#### :rocket: Enhancement
+* [#503](https://github.com/babel/ember-cli-babel/pull/503) Support static class blocks when _not_ using an explicit babel config file. ([@NullVoxPopuli](https://github.com/NullVoxPopuli))
+
+#### Committers: 1
+- [@NullVoxPopuli](https://github.com/NullVoxPopuli)
+
+## v8.1.0 (2023-09-26)
+
+#### :rocket: Enhancement
+* [#502](https://github.com/babel/ember-cli-babel/pull/502) Ensure that plugin-transform-class-static-block is provided ([@NullVoxPopuli](https://github.com/NullVoxPopuli))
+
+#### Committers: 1
+- [@NullVoxPopuli](https://github.com/NullVoxPopuli)
+
+## v8.0.1 (2023-09-26)
+
+#### :bug: Bug Fix
+* [#500](https://github.com/babel/ember-cli-babel/pull/500) fix: filter undefined options ([@runspired](https://github.com/runspired))
+
+#### :house: Internal
+* [#498](https://github.com/babel/ember-cli-babel/pull/498) Remove `babel6` key in test ([@bertdeblock](https://github.com/bertdeblock))
+
+#### Committers: 2
+- Bert De Block ([@bertdeblock](https://github.com/bertdeblock))
+- Chris Thoburn ([@runspired](https://github.com/runspired))
+
+## v8.0.0 (2023-08-18)
+
+#### :boom: Breaking Change
+* [#494](https://github.com/babel/ember-cli-babel/pull/494) Update `broccoli-babel-transpiler` to v8 ([@bertdeblock](https://github.com/bertdeblock))
+* [#493](https://github.com/babel/ember-cli-babel/pull/493) Drop support for Node v14 and add support for Node v20 ([@bertdeblock](https://github.com/bertdeblock))
+
+#### :rocket: Enhancement
+* [#492](https://github.com/babel/ember-cli-babel/pull/492) Update `babel-plugin-module-resolver` ([@bertdeblock](https://github.com/bertdeblock))
+* [#493](https://github.com/babel/ember-cli-babel/pull/493) Drop support for Node v14 and add support for Node v20 ([@bertdeblock](https://github.com/bertdeblock))
+* [#479](https://github.com/babel/ember-cli-babel/pull/479) Update normal dependencies ([@bertdeblock](https://github.com/bertdeblock))
+* [#480](https://github.com/babel/ember-cli-babel/pull/480) Only require `@babel/core` when necessary ([@bertdeblock](https://github.com/bertdeblock))
+
+#### :memo: Documentation
+* [#467](https://github.com/babel/ember-cli-babel/pull/467) Clarify how to set `enableTypeScriptTransform` in Ember apps, addons and engines ([@ijlee2](https://github.com/ijlee2))
+
+#### :house: Internal
+* [#450](https://github.com/babel/ember-cli-babel/pull/450) Remove workaround for `@babel/helper-compilation-functions` bug that was fixed upstream ([@HeroicEric](https://github.com/HeroicEric))
+
+#### Committers: 3
+- Bert De Block ([@bertdeblock](https://github.com/bertdeblock))
+- Eric Kelly ([@HeroicEric](https://github.com/HeroicEric))
+- Isaac Lee ([@ijlee2](https://github.com/ijlee2))
+
+## v8.0.0-beta.0 (2023-01-24)
+
+#### :boom: Breaking Change
+* [#460](https://github.com/babel/ember-cli-babel/pull/460) Update `broccoli-babel-transpiler` to v8.0.0-beta.1 ([@bertdeblock](https://github.com/bertdeblock))
+* [#458](https://github.com/babel/ember-cli-babel/pull/458) Drop support for the `includePolyfill` option ([@bertdeblock](https://github.com/bertdeblock))
+* [#454](https://github.com/babel/ember-cli-babel/pull/454) Drop support for Node < v14 and add support for Node v16 and v18 ([@bertdeblock](https://github.com/bertdeblock))
+* [#452](https://github.com/babel/ember-cli-babel/pull/452) Move `@babel/core` to `peerDependencies` to resolve peer dependency warnings and errors ([@NullVoxPopuli](https://github.com/NullVoxPopuli))
+
+#### :rocket: Enhancement
+* [#454](https://github.com/babel/ember-cli-babel/pull/454) Drop support for Node < v14 and add support for Node v16 and v18 ([@bertdeblock](https://github.com/bertdeblock))
+
+#### :bug: Bug Fix
+* [#452](https://github.com/babel/ember-cli-babel/pull/452) Move `@babel/core` to `peerDependencies` to resolve peer dependency warnings and errors ([@NullVoxPopuli](https://github.com/NullVoxPopuli))
+
+#### :memo: Documentation
+* [#464](https://github.com/babel/ember-cli-babel/pull/464) Add upgrading to v8 guide ([@bertdeblock](https://github.com/bertdeblock))
+
+#### Committers: 4
+- Bert De Block ([@bertdeblock](https://github.com/bertdeblock))
+- Katie Gengler ([@kategengler](https://github.com/kategengler))
+- [@NullVoxPopuli](https://github.com/NullVoxPopuli)
+- [@colenso](https://github.com/colenso)
+
 ## v7.26.11 (2021-12-22)
 
 #### :bug: Bug Fix

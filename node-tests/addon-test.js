@@ -9,7 +9,7 @@ const AddonMixin = require('../index');
 const CommonTags = require('common-tags');
 const stripIndent = CommonTags.stripIndent;
 const { ensureSymlinkSync } = require('fs-extra');
-const FixturifyProject = require('fixturify-project');
+const { Project: FixturifyProject } = require('fixturify-project');
 const EmberProject = require('ember-cli/lib/models/project');
 const MockCLI = require('ember-cli/tests/helpers/mock-cli');
 const BroccoliTestHelper = require('broccoli-test-helper');
@@ -18,8 +18,7 @@ const createTempDir = BroccoliTestHelper.createTempDir;
 const terminateWorkerPool = require('./utils/terminate-workers');
 const path = require('path');
 const fs = require('fs');
-const rimraf = require('rimraf');
-const clone = require('clone');
+const { rimraf } = require('rimraf');
 const {
   _shouldHandleTypeScript,
   _shouldIncludeHelpers,
@@ -127,6 +126,32 @@ describe('ember-cli-babel', function() {
       });
     }));
 
+    describe('static class blocks', function() {
+      it('can compile static blocks', co.wrap(function*(){
+        input.write({
+          'foo.js': stripIndent`
+            let Second = class Second extends Component {
+              static {
+                // Set Foo.bar = 1;
+                this.bar = 1;
+              }
+            }
+          `
+        });
+
+        subject = this.addon.transpileTree(input.path());
+        output = createBuilder(subject);
+
+        yield output.build();
+
+        expect(
+          output.read()
+        ).to.deep.equal({
+          "foo.js": "function _typeof(o) { \"@babel/helpers - typeof\"; return _typeof = \"function\" == typeof Symbol && \"symbol\" == typeof Symbol.iterator ? function (o) { return typeof o; } : function (o) { return o && \"function\" == typeof Symbol && o.constructor === Symbol && o !== Symbol.prototype ? \"symbol\" : typeof o; }, _typeof(o); }\ndefine(\"foo\", [], function () {\n  \"use strict\";\n\n  var _class;\n  function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if (\"value\" in descriptor) descriptor.writable = true; Object.defineProperty(target, _toPropertyKey(descriptor.key), descriptor); } }\n  function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); Object.defineProperty(Constructor, \"prototype\", { writable: false }); return Constructor; }\n  function _toPropertyKey(arg) { var key = _toPrimitive(arg, \"string\"); return _typeof(key) === \"symbol\" ? key : String(key); }\n  function _toPrimitive(input, hint) { if (_typeof(input) !== \"object\" || input === null) return input; var prim = input[Symbol.toPrimitive]; if (prim !== undefined) { var res = prim.call(input, hint || \"default\"); if (_typeof(res) !== \"object\") return res; throw new TypeError(\"@@toPrimitive must return a primitive value.\"); } return (hint === \"string\" ? String : Number)(input); }\n  function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError(\"Cannot call a class as a function\"); } }\n  function _inherits(subClass, superClass) { if (typeof superClass !== \"function\" && superClass !== null) { throw new TypeError(\"Super expression must either be null or a function\"); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, writable: true, configurable: true } }); Object.defineProperty(subClass, \"prototype\", { writable: false }); if (superClass) _setPrototypeOf(subClass, superClass); }\n  function _setPrototypeOf(o, p) { _setPrototypeOf = Object.setPrototypeOf ? Object.setPrototypeOf.bind() : function _setPrototypeOf(o, p) { o.__proto__ = p; return o; }; return _setPrototypeOf(o, p); }\n  function _createSuper(Derived) { var hasNativeReflectConstruct = _isNativeReflectConstruct(); return function _createSuperInternal() { var Super = _getPrototypeOf(Derived), result; if (hasNativeReflectConstruct) { var NewTarget = _getPrototypeOf(this).constructor; result = Reflect.construct(Super, arguments, NewTarget); } else { result = Super.apply(this, arguments); } return _possibleConstructorReturn(this, result); }; }\n  function _possibleConstructorReturn(self, call) { if (call && (_typeof(call) === \"object\" || typeof call === \"function\")) { return call; } else if (call !== void 0) { throw new TypeError(\"Derived constructors may only return object or undefined\"); } return _assertThisInitialized(self); }\n  function _assertThisInitialized(self) { if (self === void 0) { throw new ReferenceError(\"this hasn't been initialised - super() hasn't been called\"); } return self; }\n  function _isNativeReflectConstruct() { if (typeof Reflect === \"undefined\" || !Reflect.construct) return false; if (Reflect.construct.sham) return false; if (typeof Proxy === \"function\") return true; try { Boolean.prototype.valueOf.call(Reflect.construct(Boolean, [], function () {})); return true; } catch (e) { return false; } }\n  function _getPrototypeOf(o) { _getPrototypeOf = Object.setPrototypeOf ? Object.getPrototypeOf.bind() : function _getPrototypeOf(o) { return o.__proto__ || Object.getPrototypeOf(o); }; return _getPrototypeOf(o); }\n  var Second = (_class = /*#__PURE__*/function (_Component) {\n    _inherits(Second, _Component);\n    var _super = _createSuper(Second);\n    function Second() {\n      _classCallCheck(this, Second);\n      return _super.apply(this, arguments);\n    }\n    return _createClass(Second);\n  }(Component), _class.bar = 1, _class);\n});"
+        });
+      }));
+    });
+
     describe('decorators and class fields', function() {
       it(
         "can compile decorators",
@@ -134,15 +159,15 @@ describe('ember-cli-babel', function() {
           input.write({
             "foo.js": `import Component from '@glimmer/component';\nimport { tracked } from '@glimmer/tracking';\nexport default class Foo extends Component { @tracked thisIsTracked = true; }`,
           });
-  
+
           this.addon.project.targets = {
             browsers: ["last 2 chrome versions"],
           };
-  
+
           subject = this.addon.transpileTree(input.path(), {});
-  
+
           output = createBuilder(subject);
-  
+
           yield output.build();
           expect(output.read()["foo.js"]).not.to.include(
             "_initializerWarningHelper(_descriptor, this)"
@@ -399,7 +424,7 @@ describe('ember-cli-babel', function() {
           expect(
             output.read()
           ).to.deep.equal({
-            "foo.js": `define("foo", [], function () {\n  "use strict";\n\n  if (true\n  /* DEBUG */\n  ) {\n    console.log('debug mode!');\n  }\n});`
+            "foo.js": `define("foo", [], function () {\n  "use strict";\n\n  if (true /* DEBUG */) {\n    console.log('debug mode!');\n  }\n});`
           });
         }));
 
@@ -866,7 +891,7 @@ describe('ember-cli-babel', function() {
           expect(
             output.read()
           ).to.deep.equal({
-            "foo.js": `define("foo", [], function () {\n  "use strict";\n\n  if (false\n  /* DEBUG */\n  ) {\n    console.log('debug mode!');\n  }\n});`
+            "foo.js": `define("foo", [], function () {\n  "use strict";\n\n  if (false /* DEBUG */) {\n    console.log('debug mode!');\n  }\n});`
           });
         }));
 
@@ -1036,7 +1061,7 @@ describe('ember-cli-babel', function() {
         expect(
           output.read()
         ).to.deep.equal({
-          "foo.js": `define(\"foo\", [], function () {\n  \"use strict\";\n\n  Ember.String.camelize('stuff-here');\n});`
+          "foo.js": `define("foo", [], function () {\n  "use strict";\n\n  Ember.String.camelize('stuff-here');\n});`
         });
       }));
     });
@@ -1200,10 +1225,9 @@ describe('ember-cli-babel', function() {
           return prepareAddon(addon);
         });
         fixturifyProject.addDependency('ember-cli-babel', 'babel/ember-cli-babel#master');
-        let pkg = JSON.parse(fixturifyProject.toJSON('package.json'));
-        fixturifyProject.writeSync();
+        yield fixturifyProject.write();
 
-        let linkPath = path.join(fixturifyProject.root, 'whatever/node_modules/ember-cli-babel');
+        let linkPath = path.join(fixturifyProject.baseDir, 'node_modules/ember-cli-babel');
         let addonPath = path.resolve(__dirname, '../');
         rimraf.sync(linkPath);
         fs.symlinkSync(addonPath, linkPath, 'junction');
@@ -1212,8 +1236,7 @@ describe('ember-cli-babel', function() {
         };
 
         let cli = new MockCLI();
-        let root = path.join(fixturifyProject.root, 'whatever');
-        project = new EmberProject(root, pkg, cli.ui, cli);
+        project = new EmberProject(fixturifyProject.baseDir, fixturifyProject.pkg, cli.ui, cli);
         project.initializeAddons();
         this.addon = project.addons.find(a => { return a.name === 'ember-cli-babel'; });
         input = yield createTempDir();
@@ -1245,7 +1268,7 @@ describe('ember-cli-babel', function() {
         expect(
           output.read()
         ).to.deep.equal({
-          'foo.js': `define("foo", [], function () {\n  "use strict";\n\n  var foo = "hi";\n});`
+          'foo.js': `define("foo", [], function () {\n  "use strict";\n\n  let foo = "hi";\n});`
         });
       }));
 
@@ -1333,64 +1356,6 @@ describe('ember-cli-babel', function() {
     });
   });
 
-  describe('_shouldIncludePolyfill()', function() {
-    describe('without any includePolyfill option set', function() {
-      it('should return false', function() {
-        expect(this.addon._shouldIncludePolyfill()).to.be.false;
-      });
-
-      it('should not print deprecation messages', function() {
-        this.addon._shouldIncludePolyfill();
-
-        let deprecationMessages = this.ui.output.split('\n').filter(function(line) {
-          return line.indexOf('Putting the "includePolyfill" option in "babel" is deprecated') !== -1;
-        });
-
-        expect(deprecationMessages).to.have.lengthOf(0);
-      });
-    });
-
-    describe('with ember-cli-babel.includePolyfill = true', function() {
-      beforeEach(function() {
-        this.addon.parent.options = { 'ember-cli-babel': { includePolyfill: true } };
-      });
-
-      it('should return true', function() {
-        expect(this.addon._shouldIncludePolyfill()).to.be.true;
-      });
-
-      it('should not print deprecation messages', function() {
-        this.addon._shouldIncludePolyfill();
-
-        let deprecationMessages = this.ui.output.split('\n').filter(function(line) {
-          return line.indexOf('Putting the "includePolyfill" option in "babel" is deprecated') !== -1;
-        });
-
-        expect(deprecationMessages).to.have.lengthOf(0);
-      });
-    });
-
-    describe('with ember-cli-babel.includePolyfill = false', function() {
-      beforeEach(function() {
-        this.addon.parent.options = { 'ember-cli-babel': { includePolyfill: false } };
-      });
-
-      it('should return false', function() {
-        expect(this.addon._shouldIncludePolyfill()).to.be.false;
-      });
-
-      it('should not print deprecation messages', function() {
-        this.addon._shouldIncludePolyfill();
-
-        let deprecationMessages = this.ui.output.split('\n').filter(function(line) {
-          return line.indexOf('Putting the "includePolyfill" option in "babel" is deprecated') !== -1;
-        });
-
-        expect(deprecationMessages).to.have.lengthOf(0);
-      });
-    });
-  });
-
   describe('_shouldHandleTypeScript', function() {
     let project;
     let unlink;
@@ -1401,10 +1366,9 @@ describe('ember-cli-babel', function() {
         return prepareAddon(addon);
       });
       fixturifyProject.addDependency('ember-cli-babel', 'babel/ember-cli-babel#master');
-      let pkg = JSON.parse(fixturifyProject.toJSON('package.json'));
-      fixturifyProject.writeSync();
+      yield fixturifyProject.write();
 
-      let linkPath = path.join(fixturifyProject.root, 'whatever/node_modules/ember-cli-babel');
+      let linkPath = path.join(fixturifyProject.baseDir, 'node_modules/ember-cli-babel');
       let addonPath = path.resolve(__dirname, '../');
       rimraf.sync(linkPath);
       fs.symlinkSync(addonPath, linkPath, 'junction');
@@ -1413,8 +1377,7 @@ describe('ember-cli-babel', function() {
       };
 
       let cli = new MockCLI();
-      let root = path.join(fixturifyProject.root, 'whatever');
-      project = new EmberProject(root, pkg, cli.ui, cli);
+      project = new EmberProject(fixturifyProject.baseDir, fixturifyProject.pkg, cli.ui, cli);
       project.initializeAddons();
       context.addon = project.addons.find(a => { return a.name === 'ember-cli-babel'; });
       input = yield createTempDir();
@@ -1706,19 +1669,23 @@ describe('ember-cli-babel', function() {
     this.timeout(0);
 
     it('returns broccoli-babel-transpiler options by default', function() {
+      this.addon.parent = { ...this.addon.parent, name: 'foo' };
+
       let result = this.addon.buildBabelOptions();
 
+      expect(result.annotation).to.equal('Babel: foo');
       expect(result.moduleIds).to.be.true;
-      expect(result.annotation).to.be;
       expect(result.babelrc).to.be.false;
       expect(result.configFile).to.be.false;
     });
 
     it('returns broccoli-babel-transpiler options when asked for', function() {
+      this.addon.parent = { ...this.addon.parent, name: 'foo' };
+
       let result = this.addon.buildBabelOptions('broccoli');
 
+      expect(result.annotation).to.equal('Babel: foo');
       expect(result.moduleIds).to.be.true;
-      expect(result.annotation).to.be;
       expect(result.babelrc).to.be.false;
       expect(result.configFile).to.be.false;
     });
@@ -1732,7 +1699,6 @@ describe('ember-cli-babel', function() {
 
       expect(result.annotation).to.equal('hello!!!');
       expect(result.moduleIds).to.be.true;
-      expect(result.annotation).to.be;
       expect(result.babelrc).to.be.false;
       expect(result.configFile).to.be.false;
     });
@@ -1813,7 +1779,7 @@ describe('ember-cli-babel', function() {
       this.addon.parent = Object.assign({}, this.addon.parent, {
         dependencies() { return {}; },
         options: {
-          babel6: {
+          babel: {
             plugins: [ {} ]
           },
         },
@@ -1932,16 +1898,6 @@ describe('ember-cli-babel', function() {
       let pluginRequired = this.addon.isPluginRequired('transform-regenerator');
       expect(pluginRequired).to.be.false;
     });
-
-    it('defensively copies `targets` to prevent @babel/helper-compilation-functions mutating it', function() {
-      let targets = {
-        browsers: ['last 2 Chrome versions']
-      };
-      this.addon.project.targets = clone(targets);
-
-      this.addon.isPluginRequired('transform-regenerator');
-      expect(this.addon.project.targets).to.deep.equal(targets);
-    });
   });
 });
 
@@ -1966,10 +1922,9 @@ describe('EmberData Packages Polyfill', function() {
       fixturifyProject.addDependency('random-addon', '0.0.1', addon => {
         return prepareAddon(addon);
       });
-      let pkg = JSON.parse(fixturifyProject.toJSON('package.json'));
-      fixturifyProject.writeSync();
+      yield fixturifyProject.write();
 
-      let linkPath = path.join(fixturifyProject.root, '/whatever/node_modules/ember-cli-babel');
+      let linkPath = path.join(fixturifyProject.baseDir, 'node_modules/ember-cli-babel');
       let addonPath = path.resolve(__dirname, '../');
       rimraf.sync(linkPath);
       fs.symlinkSync(addonPath, linkPath, 'junction');
@@ -1978,8 +1933,7 @@ describe('EmberData Packages Polyfill', function() {
       };
 
       let cli = new MockCLI();
-      let root = path.join(fixturifyProject.root, 'whatever');
-      project = new EmberProject(root, pkg, cli.ui, cli);
+      project = new EmberProject(fixturifyProject.baseDir, fixturifyProject.pkg, cli.ui, cli);
       project.initializeAddons();
 
       self.addon = project.addons.find(a => { return a.name === 'ember-cli-babel'; });
@@ -2111,8 +2065,7 @@ describe('EmberData Packages Polyfill', function() {
      'foo',
       assembleLines([
         `_exports.default = void 0;`,
-        `var _default = _emberData.default.Store;`,
-        `_exports.default = _default;`
+        `var _default = _exports.default = _emberData.default.Store;`,
       ])
     );
    let bemOutput = moduleOutput(
@@ -2120,7 +2073,7 @@ describe('EmberData Packages Polyfill', function() {
      assembleLines([
        `Object.defineProperty(_exports, "default", {`,
        `  enumerable: true,`,
-       `  get: function get() {`,
+       `  get: function () {`,
        `    return _emberData.default;`,
        `  }`,
        `});`
@@ -2132,10 +2085,8 @@ describe('EmberData Packages Polyfill', function() {
       `_exports.name = _exports.User = void 0;`,
       `var Model = _emberData.default.Model;`,
       `var attr = _emberData.default.attr;`,
-      `var User = Model;`,
-      `_exports.User = User;`,
-      `var name = attr;`,
-      `_exports.name = name;`
+      `var User = _exports.User = Model;`,
+      `var name = _exports.name = attr;`,
      ])
     );
    let bazOutput = moduleOutput(
@@ -2143,8 +2094,7 @@ describe('EmberData Packages Polyfill', function() {
      assembleLines([
        `_exports.User = void 0;`,
        `var EmberData = _emberData.default;`,
-       `var User = EmberData.Model;`,
-       `_exports.User = User;`
+       `var User = _exports.User = EmberData.Model;`,
      ])
    );
 
@@ -2177,10 +2127,9 @@ describe('EmberData Packages Polyfill - ember-cli-babel for ember-data', functio
       fixturifyProject.addDependency('random-addon', '0.0.1', addon => {
         return prepareAddon(addon);
       });
-      let pkg = JSON.parse(fixturifyProject.toJSON('package.json'));
-      fixturifyProject.writeSync();
+      yield fixturifyProject.write();
 
-      let linkPath = path.join(fixturifyProject.root, `/whatever/node_modules/${p}/node_modules/ember-cli-babel`);
+      let linkPath = path.join(fixturifyProject.baseDir, `node_modules/${p}/node_modules/ember-cli-babel`);
       let addonPath = path.resolve(__dirname, '../');
       rimraf.sync(linkPath);
       fs.symlinkSync(addonPath, linkPath, 'junction');
@@ -2189,8 +2138,7 @@ describe('EmberData Packages Polyfill - ember-cli-babel for ember-data', functio
       };
 
       let cli = new MockCLI();
-      let root = path.join(fixturifyProject.root, 'whatever');
-      project = new EmberProject(root, pkg, cli.ui, cli);
+      project = new EmberProject(fixturifyProject.baseDir, fixturifyProject.pkg, cli.ui, cli);
       project.initializeAddons();
 
       self.emberDataAddon = project.addons.find(a => { return a.name === p; });
@@ -2267,7 +2215,6 @@ describe('babel config file', function() {
       fixturifyProject.addDependency('random-addon', '0.0.1', addon => {
         return prepareAddon(addon);
       });
-      let pkg = JSON.parse(fixturifyProject.toJSON('package.json'));
       fixturifyProject.files['babel.config.js'] =
       `module.exports = function (api) {
         api.cache(true);
@@ -2281,34 +2228,32 @@ describe('babel config file', function() {
       const packageDir = path.dirname(require.resolve(path.join("@babel/plugin-transform-modules-amd", 'package.json')));
       // symlink the "@babel/plugin-transform-modules-amd" dependency into the project
       // TODO: Move this function out so that it can be used by other tests in the future.
-      const writeSync = function () {
+      const writeSync = async function () {
         let stack = [];
-        fixturifyProject.writeSync();
+        await fixturifyProject.write();
         ensureSymlinkSync(
           packageDir,
           path.join(
-            fixturifyProject.root,
-            fixturifyProject.name,
+            fixturifyProject.baseDir,
             "node_modules",
             "@babel/plugin-transform-modules-amd"
           ),
           "dir"
         );
-        for (let dep of fixturifyProject.dependencies()) {
+        for (let dep of fixturifyProject.dependencyProjects()) {
           stack.push({
             project: dep,
             root: path.join(
-              fixturifyProject.root,
-              fixturifyProject.name,
+              fixturifyProject.baseDir,
               "node_modules"
             ),
           });
         }
       };
 
-      writeSync(fixturifyProject)
+      yield writeSync(fixturifyProject);
 
-      let linkPath = path.join(fixturifyProject.root, '/whatever/node_modules/ember-cli-babel');
+      let linkPath = path.join(fixturifyProject.baseDir, 'node_modules/ember-cli-babel');
       let addonPath = path.resolve(__dirname, '../');
       rimraf.sync(linkPath);
       fs.symlinkSync(addonPath, linkPath, 'junction');
@@ -2317,8 +2262,7 @@ describe('babel config file', function() {
       };
 
       let cli = new MockCLI();
-      let root = path.join(fixturifyProject.root, 'whatever');
-      project = new EmberProject(root, pkg, cli.ui, cli);
+      project = new EmberProject(fixturifyProject.baseDir, fixturifyProject.pkg, cli.ui, cli);
       project.initializeAddons();
 
       self.addon = project.addons.find(a => { return a.name === 'ember-cli-babel'; });
@@ -2360,7 +2304,7 @@ describe('babel config file', function() {
     yield output.build();
 
     expect(output.read()).to.deep.equal({
-      "foo.js": `define(\"foo\", [\"exports\"], function (_exports) {\n  \"use strict\";\n\n  Object.defineProperty(_exports, \"__esModule\", {\n    value: true\n  });\n  _exports.default = void 0;\n  var _default = {};\n  _exports.default = _default;\n});`,
+      "foo.js": `define("foo", ["exports"], function (_exports) {\n  "use strict";\n\n  Object.defineProperty(_exports, "__esModule", {\n    value: true\n  });\n  _exports.default = void 0;\n  var _default = _exports.default = {};\n});`,
     });
   }));
 
@@ -2402,7 +2346,7 @@ describe('babel config file', function() {
 
     expect(output.read()).to.deep.equal({
       "foo.js":
-        'define("foo", ["exports"], function (_exports) {\n  "use strict";\n\n  Object.defineProperty(_exports, "__esModule", {\n    value: true\n  });\n  _exports.default = void 0;\n  var _default = {};\n  _exports.default = _default;\n});',
+        'define("foo", ["exports"], function (_exports) {\n  "use strict";\n\n  Object.defineProperty(_exports, "__esModule", {\n    value: true\n  });\n  _exports.default = void 0;\n  var _default = _exports.default = {};\n});',
     });
   }));
 });

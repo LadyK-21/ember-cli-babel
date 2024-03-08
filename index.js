@@ -10,9 +10,6 @@ const {
 } = require("./lib/babel-options-util");
 
 const VersionChecker = require('ember-cli-version-checker');
-const clone = require('clone');
-const babel = require('@babel/core');
-const path = require('path');
 const getBabelOptions = require('./lib/get-babel-options');
 const findApp = require('./lib/find-app');
 const emberPlugins = require('./lib/ember-plugins');
@@ -65,6 +62,8 @@ module.exports = {
     let options;
 
     if (shouldUseBabelConfigFile) {
+      const babel = require('@babel/core');
+
       let babelConfig = babel.loadPartialConfig({
         root: this.parent.root,
         rootMode: 'root',
@@ -114,6 +113,7 @@ module.exports = {
     let providedAnnotation;
     let throwUnlessParallelizable;
     let sourceMaps = false;
+    let generatorOpts = {};
     let shouldCompileModules = _shouldCompileModules(config, this.project);
 
     if (emberCLIBabelConfig) {
@@ -125,12 +125,17 @@ module.exports = {
       sourceMaps = config.babel.sourceMaps;
     }
 
+    if (config.babel && "generatorOpts" in config.babel) {
+      generatorOpts = config.babel.generatorOpts;
+    }
+
     let options = {
       annotation: providedAnnotation || `Babel: ${_parentName(this.parent)}`,
       sourceMaps,
+      generatorOpts,
       throwUnlessParallelizable,
       filterExtensions: this.getSupportedExtensions(config),
-      plugins: []
+      plugins: [],
     };
 
     if (shouldCompileModules) {
@@ -149,7 +154,41 @@ module.exports = {
     let config = _config || this._getAddonOptions();
     let description = `000${++count}`.slice(-3);
     let postDebugTree = this._debugTree(inputTree, `${description}:input`);
-    let options = Object.assign({}, this._buildBroccoliBabelTranspilerOptions(config), this.buildBabelOptions('babel', config));
+    let {
+      // Separate Babel options from `broccoli-babel-transpiler` options.
+      babelrc,
+      configFile,
+      getModuleId,
+      highlightCode,
+      moduleIds,
+      plugins,
+      sourceMaps,
+      ...transpilerOptions
+    } = this._buildBroccoliBabelTranspilerOptions(config);
+    let options = {
+      ...transpilerOptions,
+      // `broccoli-babel-transpiler` now expects all Babel options to be
+      // present under a `babel` key.
+      babel: {
+        babelrc,
+        configFile,
+        getModuleId,
+        highlightCode,
+        moduleIds,
+        plugins,
+        sourceMaps,
+        ...this.buildBabelOptions('babel', config),
+      },
+    };
+
+    // Remove any undefined options so that they don't override the default
+    // Or error when broccoli-babel-transpiler checks serializability
+    Object.keys(options.babel).forEach(key => {
+      if (options.babel[key] === undefined) {
+        delete options.babel[key];
+      }
+    });
+
     let output;
 
     const customAddonConfig = config['ember-cli-babel'];
@@ -179,30 +218,6 @@ module.exports = {
       ext: _getExtensions(this._getAddonOptions(), this.parent, this.project),
       toTree: (tree) => this.transpileTree(tree)
     });
-  },
-
-  _shouldIncludePolyfill() {
-    let addonOptions = this._getAddonOptions();
-    let customOptions = addonOptions['ember-cli-babel'];
-
-    if (customOptions && 'includePolyfill' in customOptions) {
-      return customOptions.includePolyfill === true;
-    } else {
-      return false;
-    }
-  },
-
-  _importPolyfill(app) {
-    let polyfillPath = 'vendor/babel-polyfill/polyfill.js';
-
-    if (this.import) {  // support for ember-cli >= 2.7
-      this.import(polyfillPath, { prepend: true });
-    } else if (app.import) { // support ember-cli < 2.7
-      app.import(polyfillPath, { prepend: true });
-    } else {
-      // eslint-disable-next-line no-console
-      console.warn('Please run: ember install ember-cli-import-polyfill');
-    }
   },
 
   _getHelperVersion() {
@@ -258,26 +273,8 @@ module.exports = {
     });
   },
 
-  treeForVendor() {
-    if (!this._shouldIncludePolyfill()) return;
-
-    const Funnel = require('broccoli-funnel');
-    const UnwatchedDir = require('broccoli-source').UnwatchedDir;
-
-    // Find babel-core's browser polyfill and use its directory as our vendor tree
-    let polyfillDir = path.dirname(require.resolve('@babel/polyfill/dist/polyfill'));
-
-    let polyfillTree = new Funnel(new UnwatchedDir(polyfillDir), {
-      destDir: 'babel-polyfill'
-    });
-
-    return polyfillTree;
-  },
-
   cacheKeyForTree(treeType) {
-    if (treeType === 'vendor') {
-      return cacheKeyForTree('vendor', this, [this._shouldIncludePolyfill()]);
-    } else if (treeType === 'addon') {
+    if (treeType === 'addon') {
       let isRootBabel = this.parent === this.project;
       let shouldIncludeHelpers = isRootBabel && _shouldIncludeHelpers(this._getAppOptions(), this);
 
@@ -285,15 +282,6 @@ module.exports = {
     }
 
     return cacheKeyForTree(treeType, this);
-  },
-
-  included: function(app) {
-    this._super.included.apply(this, arguments);
-    this.app = app;
-
-    if (this._shouldIncludePolyfill()) {
-      this._importPolyfill(app);
-    }
   },
 
   isPluginRequired(pluginName) {
@@ -332,14 +320,7 @@ module.exports = {
 
     let parser = require('@babel/helper-compilation-targets').default;
     if (typeof targets === 'object' && targets !== null) {
-      // babel version 7.10.0 introduced a change that mutates the input:
-      // https://github.com/babel/babel/pull/11500
-      // copy the object to guard against it, otherwise subsequent calls to
-      // _getTargets() will only have a mutated copy and lose all config from `config/targets.js`
-      // in the host application.
-      // PR to fix this upstream in babel: https://github.com/babel/babel/pull/11648
-      const copy = clone(targets);
-      return parser(copy);
+      return parser(targets);
     } else {
       return targets;
     }
@@ -358,6 +339,6 @@ module.exports = {
 
   // detect if running babel would do nothing... and do nothing instead
   _shouldDoNothing(options) {
-    return !options.sourceMaps && !options.plugins.length;
+    return !options.babel.sourceMaps && !options.babel.plugins.length;
   }
 };
