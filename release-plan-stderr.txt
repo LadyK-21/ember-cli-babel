@@ -1,0 +1,18 @@
+# Unlabeled Changes
+
+* `ember-cli-babel`
+  * [#496](https://github.com/emberjs/ember-cli-babel/pull/496) Update development dependencies ([@bertdeblock](https://github.com/bertdeblock))
+  * [#478](https://github.com/emberjs/ember-cli-babel/pull/478) Update development dependencies ([@bertdeblock](https://github.com/bertdeblock))
+  * [#477](https://github.com/emberjs/ember-cli-babel/pull/477) Update Babel dependencies ([@bertdeblock](https://github.com/bertdeblock))
+  * [#476](https://github.com/emberjs/ember-cli-babel/pull/476) Remove `engine.io` resolution ([@bertdeblock](https://github.com/bertdeblock))
+  * [#475](https://github.com/emberjs/ember-cli-babel/pull/475) Resolve all deprecations and errors when running test suite ([@bertdeblock](https://github.com/bertdeblock))
+  * [#474](https://github.com/emberjs/ember-cli-babel/pull/474) Resolve some deprecations when running the test suite ([@bertdeblock](https://github.com/bertdeblock))
+  * [#473](https://github.com/emberjs/ember-cli-babel/pull/473) Remove `.jshintignore` file ([@bertdeblock](https://github.com/bertdeblock))
+  * [#471](https://github.com/emberjs/ember-cli-babel/pull/471) Update `release-it` setup ([@bertdeblock](https://github.com/bertdeblock))
+  * [#469](https://github.com/emberjs/ember-cli-babel/pull/469) Add CI job to publish on tags, bump used actions ([@kategengler](https://github.com/kategengler))
+  * [#468](https://github.com/emberjs/ember-cli-babel/pull/468) Allow passing in generatorOpts ([@colenso](https://github.com/colenso))
+  * [#462](https://github.com/emberjs/ember-cli-babel/pull/462) Revert breaking changes to `buildBabelOptions` method ([@bertdeblock](https://github.com/bertdeblock))
+  * [#459](https://github.com/emberjs/ember-cli-babel/pull/459) Move dependencies that are used for development to `devDependencies` ([@bertdeblock](https://github.com/bertdeblock))
+
+
+*Cannot plan release until the above changes are labeled*.
